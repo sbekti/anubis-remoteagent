@@ -12,15 +12,15 @@ import java.net.URI;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class AgentWebSocketServer extends Thread {
+public class AgentWebSocketClient extends Thread {
 
-    private static Logger log = LoggerFactory.getLogger(AgentWebSocketServer.class);
+    private static Logger log = LoggerFactory.getLogger(AgentWebSocketClient.class);
     private AtomicBoolean running = new AtomicBoolean(false);
     private AtomicBoolean autoReconnect = new AtomicBoolean(true);
 
     private WebSocketClient client;
 
-    public AgentWebSocketServer() {}
+    public AgentWebSocketClient() {}
 
     @Override
     public void run() {

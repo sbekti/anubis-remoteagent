@@ -23,7 +23,7 @@ public class MainWorkerThread extends Thread {
     private ExecutorService executorService;
 
     public MainWorkerThread() {
-        executorService = Executors.newFixedThreadPool(SharedConfiguration.getInteger("max.worker.threads"));
+        executorService = Executors.newCachedThreadPool();
     }
 
     @Override
@@ -58,6 +58,8 @@ public class MainWorkerThread extends Thread {
     public void shutdown() {
         if (running.get()) {
             running.set(false);
+
+            executorService.shutdown();
         }
     }
 

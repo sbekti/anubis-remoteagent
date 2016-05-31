@@ -1,24 +1,31 @@
 package io.bekti.anubis.remoteagent.ws;
 
-import java.util.ArrayList;
-
 import io.bekti.anubis.remoteagent.types.ExecutionRequest;
 import io.bekti.anubis.remoteagent.utils.SharedConfiguration;
 import io.bekti.anubis.remoteagent.workers.MainWorkerThread;
+import io.bekti.anubis.remoteagent.workers.WatchDogTimer;
+import org.eclipse.jetty.util.BufferUtil;
 import org.eclipse.jetty.websocket.api.Session;
-import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
-import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
-import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
-import org.eclipse.jetty.websocket.api.annotations.WebSocket;
+import org.eclipse.jetty.websocket.api.annotations.*;
+import org.eclipse.jetty.websocket.api.extensions.Frame;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+
 @WebSocket
 public class AgentWebSocketHandler {
 
     private static Logger log = LoggerFactory.getLogger(AgentWebSocketHandler.class);
+
+    private ScheduledThreadPoolExecutor watchDogTimer;
+    private AtomicLong lastPingTimestamp = new AtomicLong();
     private static Session currentSession;
 
     public AgentWebSocketHandler() {}
@@ -42,6 +49,29 @@ public class AgentWebSocketHandler {
     public void onClose(int statusCode, String reason) {
         log.info("Connection closed: {} - {}", statusCode, reason);
         currentSession = null;
+        destroyWatchDogTimer();
+    }
+
+    @OnWebSocketFrame
+    public void onFrame(Session session, Frame frame) {
+        if (frame.getType() == Frame.Type.PING) {
+            lastPingTimestamp.set(System.currentTimeMillis());
+
+            ByteBuffer payload = frame.getPayload();
+            String stringPayload = BufferUtil.toString(payload);
+            log.info("Got PING: {}", stringPayload);
+
+            JSONObject pingPayload = new JSONObject(stringPayload);
+
+            if (watchDogTimer == null) {
+                long watchDogTimeout = pingPayload.getLong("watchDogTimeout");
+                createWatchDogTimer(session, watchDogTimeout);
+            }
+        }
+    }
+
+    public static Session getCurrentSession() {
+        return currentSession;
     }
 
     private void subscribe(Session session) {
@@ -88,8 +118,21 @@ public class AgentWebSocketHandler {
         }
     }
 
-    public static Session getCurrentSession() {
-        return currentSession;
+    private void createWatchDogTimer(Session session, long watchDogTimeout) {
+        lastPingTimestamp.set(System.currentTimeMillis());
+
+        watchDogTimer = new ScheduledThreadPoolExecutor(1);
+
+        watchDogTimer.scheduleAtFixedRate(
+                new WatchDogTimer(session, lastPingTimestamp, watchDogTimeout),
+                watchDogTimeout,
+                watchDogTimeout,
+                TimeUnit.MILLISECONDS
+        );
+    }
+
+    private void destroyWatchDogTimer() {
+        watchDogTimer.shutdown();
     }
 
 }
