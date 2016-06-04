@@ -7,7 +7,6 @@ import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
 import org.eclipse.jetty.websocket.client.WebSocketClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.net.URI;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -15,9 +14,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class AgentWebSocketClient extends Thread {
 
     private static Logger log = LoggerFactory.getLogger(AgentWebSocketClient.class);
-    private AtomicBoolean running = new AtomicBoolean(false);
-    private AtomicBoolean autoReconnect = new AtomicBoolean(true);
 
+    private AtomicBoolean running = new AtomicBoolean(false);
+    private AtomicBoolean reconnect = new AtomicBoolean(true);
     private WebSocketClient client;
 
     public AgentWebSocketClient() {}
@@ -27,7 +26,7 @@ public class AgentWebSocketClient extends Thread {
         log.info("Starting agent...");
         running.set(true);
 
-        while (running.get() && autoReconnect.get()) {
+        while (running.get() && reconnect.get()) {
             SslContextFactory sslContextFactory = new SslContextFactory();
             sslContextFactory.setTrustAll(true);
 
@@ -55,7 +54,7 @@ public class AgentWebSocketClient extends Thread {
                 }
             }
 
-            if (autoReconnect.get()) {
+            if (reconnect.get()) {
                 try {
                     long reconnectInterval = SharedConfiguration.getLong("auto.reconnect.interval");
                     Thread.sleep(reconnectInterval);
@@ -73,7 +72,7 @@ public class AgentWebSocketClient extends Thread {
     public void shutdown() {
         if (running.get()) {
             running.set(false);
-            autoReconnect.set(false);
+            reconnect.set(false);
 
             try {
                 client.stop();

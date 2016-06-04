@@ -1,8 +1,9 @@
-package io.bekti.anubis.remoteagent.types;
+package io.bekti.anubis.remoteagent.messages;
 
+import io.bekti.anubis.remoteagent.types.Event;
 import java.util.List;
 
-public class ExecutionRequest {
+public class ExecuteMessage extends BaseMessage {
 
     private String nodeId;
     private String requestId;
@@ -10,10 +11,8 @@ public class ExecutionRequest {
     private String result;
     private int exitValue;
 
-    public ExecutionRequest(String nodeId, String requestId, List<String> command) {
-        this.nodeId = nodeId;
-        this.requestId = requestId;
-        this.command = command;
+    public ExecuteMessage() {
+        this.event = Event.EXECUTE;
     }
 
     public String getNodeId() {
@@ -55,4 +54,5 @@ public class ExecutionRequest {
     public void setExitValue(int exitValue) {
         this.exitValue = exitValue;
     }
+
 }

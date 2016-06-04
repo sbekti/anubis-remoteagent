@@ -1,6 +1,9 @@
 package io.bekti.anubis.remoteagent.ws;
 
-import io.bekti.anubis.remoteagent.types.ExecutionRequest;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import io.bekti.anubis.remoteagent.messages.*;
+import io.bekti.anubis.remoteagent.models.KafkaPartition;
 import io.bekti.anubis.remoteagent.utils.SharedConfiguration;
 import io.bekti.anubis.remoteagent.workers.MainWorkerThread;
 import io.bekti.anubis.remoteagent.workers.WatchDogTimer;
@@ -8,13 +11,12 @@ import org.eclipse.jetty.util.BufferUtil;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.*;
 import org.eclipse.jetty.websocket.api.extensions.Frame;
-import org.json.JSONArray;
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -32,7 +34,7 @@ public class AgentWebSocketHandler {
 
     @OnWebSocketConnect
     public void onConnect(Session session) {
-        log.info("Connected to server: {}", session);
+        log.info("Connected to server: {}", session.getRemoteAddress().getAddress());
         currentSession = session;
 
         subscribe(session);
@@ -40,14 +42,13 @@ public class AgentWebSocketHandler {
 
     @OnWebSocketMessage
     public void onText(Session session, String message) {
-        log.info("Received message: {}", message);
-
         processMessage(message);
     }
 
     @OnWebSocketClose
     public void onClose(int statusCode, String reason) {
         log.info("Connection closed: {} - {}", statusCode, reason);
+
         currentSession = null;
         destroyWatchDogTimer();
     }
@@ -59,12 +60,12 @@ public class AgentWebSocketHandler {
 
             ByteBuffer payload = frame.getPayload();
             String stringPayload = BufferUtil.toString(payload);
-            log.info("Got PING: {}", stringPayload);
+            log.debug("Got PING: {}", stringPayload);
 
-            JSONObject pingPayload = new JSONObject(stringPayload);
+            PingMessage pingMessage = new Gson().fromJson(stringPayload, PingMessage.class);
 
             if (watchDogTimer == null) {
-                long watchDogTimeout = pingPayload.getLong("watchDogTimeout");
+                long watchDogTimeout = pingMessage.getWatchDogTimeout();
                 createWatchDogTimer(session, watchDogTimeout);
             }
         }
@@ -78,13 +79,12 @@ public class AgentWebSocketHandler {
         String topic = SharedConfiguration.getString("remote.agent.requests");
         String groupId = SharedConfiguration.getString("group.id");
 
-        JSONObject payload = new JSONObject();
-        payload.put("event", "subscribe");
-        payload.put("topics", new JSONArray().put(topic));
-        payload.put("groupId", groupId);
+        SubscribeMessage subscribeMessage = new SubscribeMessage();
+        subscribeMessage.setTopics(Collections.singletonList(topic));
+        subscribeMessage.setGroupId(groupId);
 
         try {
-            session.getRemote().sendString(payload.toString());
+            session.getRemote().sendString(subscribeMessage.toJson());
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         }
@@ -92,30 +92,57 @@ public class AgentWebSocketHandler {
 
     private void processMessage(String message) {
         try {
-            JSONObject body = new JSONObject(message);
+            JsonObject payload = new Gson().fromJson(message, JsonObject.class);
+            String event = payload.get("event").getAsString();
 
-            if (body.getString("event").equals("ping")) return;
-
-            JSONObject payload = new JSONObject(body.getString("value"));
-            String nodeId = payload.getString("nodeId");
-            String requestId = payload.getString("requestId");
-            JSONArray command = payload.getJSONArray("command");
-
-            String ownNodeId = SharedConfiguration.getString("node.id");
-
-            if (!nodeId.equals(ownNodeId)) return;
-
-            ArrayList<String> commandArgs = new ArrayList<>();
-
-            for (int i = 0; i < command.length(); ++i) {
-                commandArgs.add(command.getString(i));
+            switch (event) {
+                case "assign":
+                    AssignMessage assignMessage = new Gson().fromJson(message, AssignMessage.class);
+                    processAssignMessage(assignMessage);
+                    break;
+                case "revoke":
+                    RevokeMessage revokeMessage = new Gson().fromJson(message, RevokeMessage.class);
+                    processRevokeMessage(revokeMessage);
+                    break;
+                case "message":
+                    String value = payload.get("value").getAsString();
+                    ExecuteMessage executeMessage = new Gson().fromJson(value, ExecuteMessage.class);
+                    processExecuteMessage(executeMessage);
+                    break;
             }
 
-            ExecutionRequest request = new ExecutionRequest(nodeId, requestId, commandArgs);
-            MainWorkerThread.enqueueExecutionRequest(request);
+
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         }
+    }
+
+    private void processAssignMessage(AssignMessage assignMessage) {
+        List<String> assignments = new ArrayList<>();
+
+        for (KafkaPartition partition : assignMessage.getPartitions()) {
+            assignments.add(partition.getTopic() + "-" + partition.getId());
+        }
+
+        log.info("Got partition assignment: {}", assignments);
+    }
+
+    private void processRevokeMessage(RevokeMessage revokeMessage) {
+        List<String> revocations = new ArrayList<>();
+
+        for (KafkaPartition partition : revokeMessage.getPartitions()) {
+            revocations.add(partition.getTopic() + "-" + partition.getId());
+        }
+
+        log.info("Got partition revocation: {}", revocations);
+    }
+
+    private void processExecuteMessage(ExecuteMessage executeMessage) {
+        String ownNodeId = SharedConfiguration.getString("node.id");
+        if (!executeMessage.getNodeId().equals(ownNodeId)) return;
+
+        log.info("Got execution request: {}", executeMessage.toJson());
+        MainWorkerThread.enqueueExecutionRequest(executeMessage);
     }
 
     private void createWatchDogTimer(Session session, long watchDogTimeout) {

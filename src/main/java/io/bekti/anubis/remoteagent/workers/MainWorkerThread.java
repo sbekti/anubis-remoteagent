@@ -1,14 +1,12 @@
 package io.bekti.anubis.remoteagent.workers;
 
-import io.bekti.anubis.remoteagent.types.ExecutionRequest;
+import io.bekti.anubis.remoteagent.messages.ExecuteMessage;
+import io.bekti.anubis.remoteagent.messages.ProducerMessage;
 import io.bekti.anubis.remoteagent.utils.SharedConfiguration;
 import io.bekti.anubis.remoteagent.ws.AgentWebSocketHandler;
 import org.eclipse.jetty.websocket.api.Session;
-import org.json.JSONArray;
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.concurrent.*;
@@ -19,7 +17,7 @@ public class MainWorkerThread extends Thread {
     private static Logger log = LoggerFactory.getLogger(AgentWebSocketHandler.class);
     private AtomicBoolean running = new AtomicBoolean(false);
 
-    private static BlockingQueue<ExecutionRequest> requests = new LinkedBlockingQueue<>();
+    private static BlockingQueue<ExecuteMessage> requests = new LinkedBlockingQueue<>();
     private ExecutorService executorService;
 
     public MainWorkerThread() {
@@ -32,7 +30,7 @@ public class MainWorkerThread extends Thread {
 
         while (running.get()) {
             try {
-                ExecutionRequest request = requests.poll(1000, TimeUnit.MILLISECONDS);
+                ExecuteMessage request = requests.poll(1000, TimeUnit.MILLISECONDS);
 
                 if (request == null) continue;
 
@@ -63,27 +61,19 @@ public class MainWorkerThread extends Thread {
         }
     }
 
-    private void sendExecutionResult(Session session, ExecutionRequest request) {
+    private void sendExecutionResult(Session session, ExecuteMessage executeMessage) {
         try {
-            JSONObject response = new JSONObject();
-            response.put("nodeId", request.getNodeId());
-            response.put("requestId", request.getRequestId());
-            response.put("command", new JSONArray(request.getCommand()));
-            response.put("result", request.getResult());
-            response.put("exitValue", request.getExitValue());
+            ProducerMessage producerMessage = new ProducerMessage();
+            producerMessage.setTopic(SharedConfiguration.getString("remote.agent.responses"));
+            producerMessage.setValue(executeMessage.toJson());
 
-            JSONObject payload = new JSONObject();
-            payload.put("event", "publish");
-            payload.put("topic", SharedConfiguration.getString("remote.agent.responses"));
-            payload.put("value", response.toString());
-
-            session.getRemote().sendString(payload.toString());
+            session.getRemote().sendString(producerMessage.toJson());
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         }
     }
 
-    private void execute(ExecutionRequest request) {
+    private void execute(ExecuteMessage request) {
         StringBuffer output = new StringBuffer();
 
         try {
@@ -108,7 +98,7 @@ public class MainWorkerThread extends Thread {
         }
     }
 
-    public static void enqueueExecutionRequest(ExecutionRequest request) {
+    public static void enqueueExecutionRequest(ExecuteMessage request) {
         try {
             requests.put(request);
         } catch (Exception e) {
