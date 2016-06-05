@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 
 public class RemoteAgentMain {
 
-    private static Logger log = LoggerFactory.getLogger(RemoteAgentMain.class);
+    private static final Logger log = LoggerFactory.getLogger(RemoteAgentMain.class);
 
     public static void main(String[] args) {
         Thread mainThread = Thread.currentThread();

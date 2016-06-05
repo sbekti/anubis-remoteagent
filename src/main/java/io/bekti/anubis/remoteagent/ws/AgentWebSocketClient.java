@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class AgentWebSocketClient extends Thread {
 
-    private static Logger log = LoggerFactory.getLogger(AgentWebSocketClient.class);
+    private static final Logger log = LoggerFactory.getLogger(AgentWebSocketClient.class);
 
     private AtomicBoolean running = new AtomicBoolean(false);
     private AtomicBoolean reconnect = new AtomicBoolean(true);

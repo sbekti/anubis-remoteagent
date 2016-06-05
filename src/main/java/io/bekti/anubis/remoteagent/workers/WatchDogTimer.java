@@ -7,7 +7,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class WatchDogTimer implements Runnable {
 
-    private Logger log = LoggerFactory.getLogger(WatchDogTimer.class);
+    private static final Logger log = LoggerFactory.getLogger(WatchDogTimer.class);
+
     private Session session;
     private AtomicLong lastPingTimestamp;
     private long pingTimeout;

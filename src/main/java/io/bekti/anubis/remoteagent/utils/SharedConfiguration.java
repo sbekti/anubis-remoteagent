@@ -9,7 +9,7 @@ import java.util.Properties;
 
 public class SharedConfiguration {
 
-    private static Logger log = LoggerFactory.getLogger(SharedConfiguration.class);
+    private static final Logger log = LoggerFactory.getLogger(SharedConfiguration.class);
 
     private static Properties props = new Properties();
 

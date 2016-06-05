@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class MainWorkerThread extends Thread {
 
-    private static Logger log = LoggerFactory.getLogger(AgentWebSocketHandler.class);
+    private static final Logger log = LoggerFactory.getLogger(AgentWebSocketHandler.class);
     private AtomicBoolean running = new AtomicBoolean(false);
 
     private static BlockingQueue<ExecuteMessage> requests = new LinkedBlockingQueue<>();

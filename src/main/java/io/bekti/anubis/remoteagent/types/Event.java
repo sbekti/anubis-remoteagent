@@ -1,34 +1,25 @@
 package io.bekti.anubis.remoteagent.types;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public enum Event {
 
-    @SerializedName("assign")
+    @JsonProperty("assign")
     ASSIGN,
 
-    @SerializedName("execute")
+    @JsonProperty("execute")
     EXECUTE,
 
-    @SerializedName("commit")
-    COMMIT,
-
-    @SerializedName("message")
-    MESSAGE,
-
-    @SerializedName("ping")
+    @JsonProperty("ping")
     PING,
 
-    @SerializedName("publish")
+    @JsonProperty("publish")
     PUBLISH,
 
-    @SerializedName("revoke")
+    @JsonProperty("revoke")
     REVOKE,
 
-    @SerializedName("seek")
-    SEEK,
-
-    @SerializedName("subscribe")
+    @JsonProperty("subscribe")
     SUBSCRIBE
 
 }

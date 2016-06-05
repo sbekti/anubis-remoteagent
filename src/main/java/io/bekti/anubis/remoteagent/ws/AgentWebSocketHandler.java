@@ -1,7 +1,5 @@
 package io.bekti.anubis.remoteagent.ws;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 import io.bekti.anubis.remoteagent.messages.*;
 import io.bekti.anubis.remoteagent.models.KafkaPartition;
 import io.bekti.anubis.remoteagent.utils.SharedConfiguration;
@@ -11,6 +9,8 @@ import org.eclipse.jetty.util.BufferUtil;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.*;
 import org.eclipse.jetty.websocket.api.extensions.Frame;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.nio.ByteBuffer;
@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicLong;
 @WebSocket
 public class AgentWebSocketHandler {
 
-    private static Logger log = LoggerFactory.getLogger(AgentWebSocketHandler.class);
+    private static final Logger log = LoggerFactory.getLogger(AgentWebSocketHandler.class);
 
     private ScheduledThreadPoolExecutor watchDogTimer;
     private AtomicLong lastPingTimestamp = new AtomicLong();
@@ -55,19 +55,23 @@ public class AgentWebSocketHandler {
 
     @OnWebSocketFrame
     public void onFrame(Session session, Frame frame) {
-        if (frame.getType() == Frame.Type.PING) {
-            lastPingTimestamp.set(System.currentTimeMillis());
+        try {
+            if (frame.getType() == Frame.Type.PING) {
+                lastPingTimestamp.set(System.currentTimeMillis());
 
-            ByteBuffer payload = frame.getPayload();
-            String stringPayload = BufferUtil.toString(payload);
-            log.debug("Got PING: {}", stringPayload);
+                ByteBuffer payload = frame.getPayload();
+                String stringPayload = BufferUtil.toString(payload);
+                log.debug("Got PING: {}", stringPayload);
 
-            PingMessage pingMessage = new Gson().fromJson(stringPayload, PingMessage.class);
+                PingMessage pingMessage = new ObjectMapper().readValue(stringPayload, PingMessage.class);
 
-            if (watchDogTimer == null) {
-                long watchDogTimeout = pingMessage.getWatchDogTimeout();
-                createWatchDogTimer(session, watchDogTimeout);
+                if (watchDogTimer == null) {
+                    long watchDogTimeout = pingMessage.getWatchDogTimeout();
+                    createWatchDogTimer(session, watchDogTimeout);
+                }
             }
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
         }
     }
 
@@ -92,26 +96,24 @@ public class AgentWebSocketHandler {
 
     private void processMessage(String message) {
         try {
-            JsonObject payload = new Gson().fromJson(message, JsonObject.class);
-            String event = payload.get("event").getAsString();
+            JsonNode payload = new ObjectMapper().readValue(message, JsonNode.class);
+            String event = payload.get("event").asText();
 
             switch (event) {
                 case "assign":
-                    AssignMessage assignMessage = new Gson().fromJson(message, AssignMessage.class);
+                    AssignMessage assignMessage = new ObjectMapper().readValue(message, AssignMessage.class);
                     processAssignMessage(assignMessage);
                     break;
                 case "revoke":
-                    RevokeMessage revokeMessage = new Gson().fromJson(message, RevokeMessage.class);
+                    RevokeMessage revokeMessage = new ObjectMapper().readValue(message, RevokeMessage.class);
                     processRevokeMessage(revokeMessage);
                     break;
                 case "message":
-                    String value = payload.get("value").getAsString();
-                    ExecuteMessage executeMessage = new Gson().fromJson(value, ExecuteMessage.class);
+                    String value = payload.get("value").asText();
+                    ExecuteMessage executeMessage = new ObjectMapper().readValue(value, ExecuteMessage.class);
                     processExecuteMessage(executeMessage);
                     break;
             }
-
-
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         }
