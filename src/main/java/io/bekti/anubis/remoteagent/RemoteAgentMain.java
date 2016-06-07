@@ -2,7 +2,7 @@ package io.bekti.anubis.remoteagent;
 
 import io.bekti.anubis.remoteagent.worker.MainWorkerThread;
 import io.bekti.anubis.remoteagent.http.AgentWebSocketClient;
-import io.bekti.anubis.remoteagent.util.SharedConfiguration;
+import io.bekti.anubis.remoteagent.util.ConfigUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,7 +12,7 @@ public class RemoteAgentMain {
 
     public static void main(String[] args) {
         Thread mainThread = Thread.currentThread();
-        SharedConfiguration.loadFromClassPath();
+        ConfigUtils.loadFromClassPath();
 
         AgentWebSocketClient client = new AgentWebSocketClient();
         client.start();

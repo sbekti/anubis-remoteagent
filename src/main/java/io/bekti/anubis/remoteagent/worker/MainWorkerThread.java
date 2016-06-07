@@ -2,7 +2,7 @@ package io.bekti.anubis.remoteagent.worker;
 
 import io.bekti.anubis.remoteagent.model.message.ExecuteMessage;
 import io.bekti.anubis.remoteagent.model.message.ProducerMessage;
-import io.bekti.anubis.remoteagent.util.SharedConfiguration;
+import io.bekti.anubis.remoteagent.util.ConfigUtils;
 import io.bekti.anubis.remoteagent.http.AgentWebSocketHandler;
 import org.eclipse.jetty.websocket.api.Session;
 import org.slf4j.Logger;
@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class MainWorkerThread extends Thread {
 
-    private static final Logger log = LoggerFactory.getLogger(AgentWebSocketHandler.class);
+    private static final Logger log = LoggerFactory.getLogger(MainWorkerThread.class);
     private AtomicBoolean running = new AtomicBoolean(false);
 
     private static BlockingQueue<ExecuteMessage> requests = new LinkedBlockingQueue<>();
@@ -64,7 +64,7 @@ public class MainWorkerThread extends Thread {
     private void sendExecutionResult(Session session, ExecuteMessage executeMessage) {
         try {
             ProducerMessage producerMessage = new ProducerMessage();
-            producerMessage.setTopic(SharedConfiguration.getString("remote.agent.responses"));
+            producerMessage.setTopic(ConfigUtils.getString("remote.agent.responses"));
             producerMessage.setValue(executeMessage.toJson());
 
             session.getRemote().sendString(producerMessage.toJson());
@@ -81,7 +81,7 @@ public class MainWorkerThread extends Thread {
             builder.redirectErrorStream(true);
             Process process = builder.start();
 
-            process.waitFor(SharedConfiguration.getLong("max.execution.time"), TimeUnit.MILLISECONDS);
+            process.waitFor(ConfigUtils.getLong("max.execution.time"), TimeUnit.MILLISECONDS);
 
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             String line;

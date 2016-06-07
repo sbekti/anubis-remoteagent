@@ -8,9 +8,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
-public class SharedConfiguration {
+public class ConfigUtils {
 
-    private static final Logger log = LoggerFactory.getLogger(SharedConfiguration.class);
+    private static final Logger log = LoggerFactory.getLogger(ConfigUtils.class);
     private static final String CONFIG_FILE = "config.properties";
 
     private static Properties props = new Properties();

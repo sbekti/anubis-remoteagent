@@ -2,7 +2,7 @@ package io.bekti.anubis.remoteagent.http;
 
 import io.bekti.anubis.remoteagent.model.message.*;
 import io.bekti.anubis.remoteagent.model.kafka.KafkaPartition;
-import io.bekti.anubis.remoteagent.util.SharedConfiguration;
+import io.bekti.anubis.remoteagent.util.ConfigUtils;
 import io.bekti.anubis.remoteagent.worker.MainWorkerThread;
 import io.bekti.anubis.remoteagent.worker.WatchDogThread;
 import org.eclipse.jetty.util.BufferUtil;
@@ -121,7 +121,7 @@ public class AgentWebSocketHandler {
     }
 
     private void processExecuteMessage(ExecuteMessage executeMessage) {
-        String ownNodeId = SharedConfiguration.getString("node.id");
+        String ownNodeId = ConfigUtils.getString("node.id");
         if (!executeMessage.getNodeId().equals(ownNodeId)) return;
 
         log.info("Got execution request: {}", executeMessage.toJson());
@@ -159,8 +159,8 @@ public class AgentWebSocketHandler {
     }
 
     private void subscribe() {
-        String topic = SharedConfiguration.getString("remote.agent.requests");
-        String groupId = SharedConfiguration.getString("group.id");
+        String topic = ConfigUtils.getString("remote.agent.requests");
+        String groupId = ConfigUtils.getString("group.id");
 
         SubscribeMessage subscribeMessage = new SubscribeMessage();
         subscribeMessage.setTopics(Collections.singletonList(topic));
@@ -174,7 +174,7 @@ public class AgentWebSocketHandler {
     }
 
     private void authenticate() {
-        String token = SharedConfiguration.getString("access.token");
+        String token = ConfigUtils.getString("access.token");
 
         AuthMessage authMessage = new AuthMessage();
         authMessage.setToken(token);
