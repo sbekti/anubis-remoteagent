@@ -16,7 +16,7 @@ gradle fatJar
 ~~~
 Edit the config file as necessary:
 ~~~shell
-vim conf/agent.properties
+vim conf/config.properties
 ~~~
 Run the agent:
 ~~~shell
