@@ -1,6 +1,5 @@
-package io.bekti.anubis.remoteagent.messages;
+package io.bekti.anubis.remoteagent.model.message;
 
-import io.bekti.anubis.remoteagent.types.Event;
 import java.util.List;
 
 public class ExecuteMessage extends BaseMessage {
@@ -12,7 +11,7 @@ public class ExecuteMessage extends BaseMessage {
     private int exitValue;
 
     public ExecuteMessage() {
-        this.event = Event.EXECUTE;
+        this.event = MessageEvent.EXECUTE;
     }
 
     public String getNodeId() {

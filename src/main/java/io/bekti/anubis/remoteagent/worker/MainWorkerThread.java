@@ -1,9 +1,9 @@
-package io.bekti.anubis.remoteagent.workers;
+package io.bekti.anubis.remoteagent.worker;
 
-import io.bekti.anubis.remoteagent.messages.ExecuteMessage;
-import io.bekti.anubis.remoteagent.messages.ProducerMessage;
-import io.bekti.anubis.remoteagent.utils.SharedConfiguration;
-import io.bekti.anubis.remoteagent.ws.AgentWebSocketHandler;
+import io.bekti.anubis.remoteagent.model.message.ExecuteMessage;
+import io.bekti.anubis.remoteagent.model.message.ProducerMessage;
+import io.bekti.anubis.remoteagent.util.SharedConfiguration;
+import io.bekti.anubis.remoteagent.http.AgentWebSocketHandler;
 import org.eclipse.jetty.websocket.api.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,7 +84,6 @@ public class MainWorkerThread extends Thread {
             process.waitFor(SharedConfiguration.getLong("max.execution.time"), TimeUnit.MILLISECONDS);
 
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-
             String line;
 
             while ((line = reader.readLine())!= null) {
@@ -99,11 +98,7 @@ public class MainWorkerThread extends Thread {
     }
 
     public static void enqueueExecutionRequest(ExecuteMessage request) {
-        try {
-            requests.put(request);
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-        }
+        requests.add(request);
     }
 
 }

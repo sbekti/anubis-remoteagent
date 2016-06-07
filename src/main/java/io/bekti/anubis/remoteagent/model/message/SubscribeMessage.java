@@ -1,6 +1,5 @@
-package io.bekti.anubis.remoteagent.messages;
+package io.bekti.anubis.remoteagent.model.message;
 
-import io.bekti.anubis.remoteagent.types.Event;
 import java.util.List;
 
 public class SubscribeMessage extends BaseMessage {
@@ -9,7 +8,7 @@ public class SubscribeMessage extends BaseMessage {
     private String groupId;
 
     public SubscribeMessage() {
-        this.event = Event.SUBSCRIBE;
+        this.event = MessageEvent.SUBSCRIBE;
     }
 
     public List<String> getTopics() {

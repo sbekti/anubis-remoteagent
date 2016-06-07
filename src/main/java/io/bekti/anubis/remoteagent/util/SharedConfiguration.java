@@ -1,7 +1,8 @@
-package io.bekti.anubis.remoteagent.utils;
+package io.bekti.anubis.remoteagent.util;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -10,8 +11,17 @@ import java.util.Properties;
 public class SharedConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(SharedConfiguration.class);
+    private static final String CONFIG_FILE = "config.properties";
 
     private static Properties props = new Properties();
+
+    public static void loadFromClassPath() {
+        try {
+            props.load(Thread.currentThread().getContextClassLoader().getResourceAsStream(CONFIG_FILE));
+        } catch (IOException e) {
+            log.error(e.getMessage(), e);
+        }
+    }
 
     public static void loadFromFile(String path) {
         InputStream input = null;

@@ -1,6 +1,4 @@
-package io.bekti.anubis.remoteagent.messages;
-
-import io.bekti.anubis.remoteagent.types.Event;
+package io.bekti.anubis.remoteagent.model.message;
 
 public class ProducerMessage extends BaseMessage {
 
@@ -9,7 +7,7 @@ public class ProducerMessage extends BaseMessage {
     private String value;
 
     public ProducerMessage() {
-        this.event = Event.PUBLISH;
+        this.event = MessageEvent.PUBLISH;
     }
 
     public String getTopic() {

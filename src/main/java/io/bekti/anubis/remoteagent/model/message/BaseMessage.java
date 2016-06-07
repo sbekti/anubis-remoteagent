@@ -1,6 +1,5 @@
-package io.bekti.anubis.remoteagent.messages;
+package io.bekti.anubis.remoteagent.model.message;
 
-import io.bekti.anubis.remoteagent.types.Event;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,13 +8,13 @@ public class BaseMessage {
 
     private static final Logger log = LoggerFactory.getLogger(BaseMessage.class);
 
-    protected Event event;
+    protected MessageEvent event;
 
-    public Event getEvent() {
+    public MessageEvent getEvent() {
         return event;
     }
 
-    public void setEvent(Event event) {
+    public void setEvent(MessageEvent event) {
         this.event = event;
     }
 

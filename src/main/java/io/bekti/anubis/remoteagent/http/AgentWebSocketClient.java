@@ -1,12 +1,13 @@
-package io.bekti.anubis.remoteagent.ws;
+package io.bekti.anubis.remoteagent.http;
 
-import io.bekti.anubis.remoteagent.utils.SharedConfiguration;
+import io.bekti.anubis.remoteagent.util.SharedConfiguration;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
 import org.eclipse.jetty.websocket.client.WebSocketClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.net.URI;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -28,7 +29,7 @@ public class AgentWebSocketClient extends Thread {
 
         while (running.get() && reconnect.get()) {
             SslContextFactory sslContextFactory = new SslContextFactory();
-            sslContextFactory.setTrustAll(true);
+            sslContextFactory.setTrustAll(SharedConfiguration.getBoolean("ssl.trust.all"));
 
             client = new WebSocketClient(sslContextFactory);
             AgentWebSocketHandler handler = new AgentWebSocketHandler();
@@ -38,6 +39,7 @@ public class AgentWebSocketClient extends Thread {
 
                 URI serverUri = new URI(SharedConfiguration.getString("server.url"));
                 ClientUpgradeRequest request = new ClientUpgradeRequest();
+
                 Future<Session> future = client.connect(handler, serverUri, request);
                 log.info("Connecting to {}", serverUri);
 

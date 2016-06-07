@@ -1,7 +1,6 @@
-package io.bekti.anubis.remoteagent.messages;
+package io.bekti.anubis.remoteagent.model.message;
 
-import io.bekti.anubis.remoteagent.models.KafkaPartition;
-import io.bekti.anubis.remoteagent.types.Event;
+import io.bekti.anubis.remoteagent.model.kafka.KafkaPartition;
 
 import java.util.List;
 
@@ -10,7 +9,7 @@ public class RevokeMessage extends BaseMessage {
     private List<KafkaPartition> partitions;
 
     public RevokeMessage() {
-        this.event = Event.REVOKE;
+        this.event = MessageEvent.REVOKE;
     }
 
     public void setPartitions(List<KafkaPartition> partitions) {
