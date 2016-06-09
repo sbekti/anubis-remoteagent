@@ -7,6 +7,7 @@ public class ExecuteMessage extends BaseMessage {
     private String nodeId;
     private String requestId;
     private List<String> command;
+    private long timeout;
     private String result;
     private int exitValue;
 
@@ -36,6 +37,14 @@ public class ExecuteMessage extends BaseMessage {
 
     public void setCommand(List<String> command) {
         this.command = command;
+    }
+
+    public long getTimeout() {
+        return timeout;
+    }
+
+    public void setTimeout(long timeout) {
+        this.timeout = timeout;
     }
 
     public String getResult() {

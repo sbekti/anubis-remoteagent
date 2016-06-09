@@ -7,6 +7,7 @@ import io.bekti.anubis.remoteagent.http.AgentWebSocketHandler;
 import org.eclipse.jetty.websocket.api.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.concurrent.*;
@@ -73,25 +74,42 @@ public class MainWorkerThread extends Thread {
         }
     }
 
-    private void execute(ExecuteMessage request) {
+    private void execute(ExecuteMessage executeMessage) {
         StringBuffer output = new StringBuffer();
 
         try {
-            ProcessBuilder builder = new ProcessBuilder(request.getCommand());
+            ProcessBuilder builder = new ProcessBuilder(executeMessage.getCommand());
             builder.redirectErrorStream(true);
             Process process = builder.start();
 
-            process.waitFor(ConfigUtils.getLong("max.execution.time"), TimeUnit.MILLISECONDS);
-
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            String line;
 
-            while ((line = reader.readLine())!= null) {
-                output.append(line + "\n");
+            long now = System.currentTimeMillis();
+            long timeout = executeMessage.getTimeout();
+            long finish = now + timeout;
+            boolean running = true;
+
+            while (running && process.isAlive()) {
+                String line;
+
+                while (running && (line = reader.readLine()) != null) {
+                    output.append(line + "\n");
+
+                    Thread.sleep(10);
+
+                    if (timeout <= 0) continue;
+
+                    if (System.currentTimeMillis() > finish) {
+                        process.destroy();
+                        running = false;
+                    }
+                }
             }
 
-            request.setResult(output.toString());
-            request.setExitValue(process.exitValue());
+            process.waitFor();
+
+            executeMessage.setResult(output.toString());
+            executeMessage.setExitValue(process.exitValue());
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         }
