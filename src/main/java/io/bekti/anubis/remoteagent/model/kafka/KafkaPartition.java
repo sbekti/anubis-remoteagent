@@ -1,4 +1,4 @@
-package io.bekti.anubis.remoteagent.models;
+package io.bekti.anubis.remoteagent.model.kafka;
 
 public class KafkaPartition {
 

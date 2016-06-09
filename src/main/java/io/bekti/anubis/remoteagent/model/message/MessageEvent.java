@@ -1,11 +1,14 @@
-package io.bekti.anubis.remoteagent.types;
+package io.bekti.anubis.remoteagent.model.message;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public enum Event {
+public enum MessageEvent {
 
     @JsonProperty("assign")
     ASSIGN,
+
+    @JsonProperty("auth")
+    AUTH,
 
     @JsonProperty("execute")
     EXECUTE,

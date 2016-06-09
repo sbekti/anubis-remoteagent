@@ -1,13 +1,11 @@
-package io.bekti.anubis.remoteagent.messages;
-
-import io.bekti.anubis.remoteagent.types.Event;
+package io.bekti.anubis.remoteagent.model.message;
 
 public class PingMessage extends BaseMessage {
 
     private long watchDogTimeout;
 
     public PingMessage() {
-        this.event = Event.PING;
+        this.event = MessageEvent.PING;
     }
 
     public long getWatchDogTimeout() {

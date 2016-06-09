@@ -1,12 +1,13 @@
-package io.bekti.anubis.remoteagent.ws;
+package io.bekti.anubis.remoteagent.http;
 
-import io.bekti.anubis.remoteagent.utils.SharedConfiguration;
+import io.bekti.anubis.remoteagent.util.ConfigUtils;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
 import org.eclipse.jetty.websocket.client.WebSocketClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.net.URI;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -28,7 +29,7 @@ public class AgentWebSocketClient extends Thread {
 
         while (running.get() && reconnect.get()) {
             SslContextFactory sslContextFactory = new SslContextFactory();
-            sslContextFactory.setTrustAll(true);
+            sslContextFactory.setTrustAll(ConfigUtils.getBoolean("ssl.trust.all"));
 
             client = new WebSocketClient(sslContextFactory);
             AgentWebSocketHandler handler = new AgentWebSocketHandler();
@@ -36,8 +37,9 @@ public class AgentWebSocketClient extends Thread {
             try {
                 client.start();
 
-                URI serverUri = new URI(SharedConfiguration.getString("server.url"));
+                URI serverUri = new URI(ConfigUtils.getString("server.url"));
                 ClientUpgradeRequest request = new ClientUpgradeRequest();
+
                 Future<Session> future = client.connect(handler, serverUri, request);
                 log.info("Connecting to {}", serverUri);
 
@@ -56,7 +58,7 @@ public class AgentWebSocketClient extends Thread {
 
             if (reconnect.get()) {
                 try {
-                    long reconnectInterval = SharedConfiguration.getLong("auto.reconnect.interval");
+                    long reconnectInterval = ConfigUtils.getLong("auto.reconnect.interval");
                     Thread.sleep(reconnectInterval);
                 } catch (InterruptedException ignored) {
 

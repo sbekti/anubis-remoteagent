@@ -16,7 +16,7 @@ gradle fatJar
 ~~~
 Edit the config file as necessary:
 ~~~shell
-vim conf/agent.properties
+vim conf/config.properties
 ~~~
 Run the agent:
 ~~~shell
@@ -32,7 +32,8 @@ Example JSON message body:
 {
   "requestId": "test-request",
   "nodeId": "d8af1316-dbc4-46a3-842d-838b0544f4b3",
-  "command": ["/bin/bash", "-c", "docker run hello-world"]
+  "command": ["/bin/bash", "-c", "docker run hello-world"],
+  "timeout": 1000 // Limit the execution time in milliseconds.
 }
 ~~~
 After sending the command, you will get the execution result on the output topic (the default is `remote_agent_responses`). Because all executions happen asynchronously, you will need to correlate the requests and the responses based on their `requestId`.
